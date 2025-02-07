@@ -1,0 +1,14 @@
+[theme]
+#primary accent color for interactive elements
+primaryColor = "#FCC200"
+
+#Background main area
+backgroundColor = "#00172B"
+
+#Background sidebar
+secondaryBackgroundColor = "#000"
+
+#Text color
+textColor = "#FFF"
+
+font= "sans serif"
