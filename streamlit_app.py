@@ -9,7 +9,7 @@ st.set_page_config(page_title='Auswertung HSV',
 
 #dataframe der Tabelle 'Eingabe'
 def get_data_from_excel():
-    df = pd.read_excel(io='HSV24_25.xlsx', sheet_name='Eingabe',
+    df = pd.read_excel(io='/workspaces/Auswertung_HSV/HSV24_25.xlsx', sheet_name='Eingabe',
                        usecols='B:AM', header=1)
     df = df.drop(columns=['S-NR','ID','Team',])
     df=df.reset_index(drop=True)
