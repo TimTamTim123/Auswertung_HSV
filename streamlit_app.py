@@ -1,5 +1,6 @@
 import pandas as pd #pip install pandas openpyxl
 import streamlit as st #pip install streamlit
+import plotly.express as px #pip install plotly-express
 import plotly.graph_objects as go
 import numpy as np
 
@@ -107,7 +108,8 @@ st.markdown("---")
 
 #Diagramm
 
-fig_df=df_selection[['Gegner','GES','Volle','Räumer','Wo','Datum']]
+fig_df=df_selection[['Gegner','GES','Volle','Räumer','Wo','Datum','Time']]
+fig_df=fig_df.sort_values(by='Time', ascending=False)
 fig_df['Schnitt']=average_score
 fig_df['Gegner']=fig_df['Gegner']+' ['+ fig_df['Wo'] + '] - ' + fig_df['Datum']
 fig_df['row_number']=range(1,len(fig_df)+1)
@@ -115,51 +117,71 @@ fig_df['row_number']=range(1,len(fig_df)+1)
 fig=go.Figure()
 #Gesamtergebnis als Scatterplot
 fig.add_trace(go.Scatter(
-    x=fig_df['Gegner'],
-    y=fig_df['GES'],
+    y=fig_df['Gegner'],
+    x=fig_df['GES'],
     mode='markers+text',
     text=fig_df['GES'],
-    textfont_size=14,
+    textfont_size=16,
     texttemplate='<b>%{text}</b>',
-    textposition='top center',
+    textposition='middle right',
     marker=dict(size=12,symbol='octagon-dot',color='#000',line=dict(width=2, color='#996515')),
     name='Gesamt',
     ))
 fig.add_trace(go.Scatter(
-    x=fig_df['Gegner'],
-    y=fig_df['Schnitt'],
+    y=fig_df['Gegner'],
+    x=fig_df['Schnitt'],
     mode='lines',
-    line=dict(color='red', width=1, dash='dash'),
+    line=dict(color='red', width=1),
     name="Schnitt"
 ))
 
 #Volle Bar
 fig.add_trace(go.Bar(
-    x=fig_df['Gegner'],
-    y=fig_df['Volle'],
+    y=fig_df['Gegner'],
+    x=fig_df['Volle'],
     text=fig_df['Volle'],
     name='Volle',
     marker_color='#fcc200',
     textposition='inside',
-    insidetextanchor='middle',
-    texttemplate='<b>%{text}</b>'
+    insidetextanchor='end',
+    texttemplate='<b>%{text}</b>',
+    orientation='h',
+    marker=dict(
+        line=dict(
+            color='black',
+            width=2
+        )
+    )
 ))
 #Räumer Bar
 fig.add_trace(go.Bar(
-    x=fig_df['Gegner'],
-    y=fig_df['Räumer'],
+    y=fig_df['Gegner'],
+    x=fig_df['Räumer'],
     text=fig_df['Räumer'],
     name='Räumer',
     marker_color='#fff000',
     textposition='inside',
-    insidetextanchor='middle',
-    texttemplate='<b>%{text}</b>'
+    insidetextanchor='start',
+    texttemplate='<b>%{text}</b>',
+    orientation='h',
+    marker=dict(
+        line=dict(
+            color='black',
+            width=2
+        )
+    )
 ))
 fig.update_layout(
     barmode='stack',
-    yaxis_title='Holz',
-    margin=dict(b=20,t=50)
-   )
+    xaxis_title='Holz',
+    margin=dict(t=10, b=10),
+    xaxis=dict(range=(250,650),showgrid=True),
+    height=600,
+    bargap=0.2,
+    autosize=True,
+
+)
+
 
 
 st.plotly_chart(fig)
@@ -176,7 +198,8 @@ hide_st_style= """
                 <style>
                 """
 
-st.dataframe(df_selection)
+df_to_display=df_selection.iloc[:, :-2]
+st.dataframe(df_to_display)
 
 st.markdown("---")
 
@@ -217,54 +240,38 @@ P3 = 0 if df_selection['S3P'].dropna().empty else int(round(df_selection['S3P'].
 P4 = 0 if df_selection['S4P'].dropna().empty else int(round(df_selection['S4P'].mean()*100, 0))
 
 st.header("Auswertung nach Bahnen :bowling:")
-name_column, avg_column, b1_column, b2_column, b3_column, b4_column = st.columns(6)
-with name_column:
-    st.subheader('')
-    st.subheader("Gesamt")
-    st.subheader("Volle")
-    st.subheader("Räumer")
-    st.subheader("Fehler")
-    st.subheader("Satzpunkte")
 
-with avg_column:
-    st.subheader("Schnitt")
-    st.subheader(f'{S_avg}')
-    st.subheader(f'{V_avg}')
-    st.subheader(f'{R_avg}')
-    st.subheader(f'{F_avg}')
-    st.subheader(f'{P_avg} %')
+auswertung_bahnen=pd.DataFrame(index=range(5), columns=range(5))
+auswertung_bahnen.index=['Gesamt', 'Volle', 'Räumer', 'Fehler', 'Satzpunkte']
+auswertung_bahnen.columns=['Schnitt', 'Bahn 1', 'Bahn 2', 'Bahn 3', 'Bahn 4']
 
-with b1_column:
-    st.subheader("Bahn :one:")
-    st.subheader(f'{S1}')
-    st.subheader(f'{V1}')
-    st.subheader(f'{R1}')
-    st.subheader(f'{F1}')
-    st.subheader(f'{P1} %')
+auswertung_bahnen.loc['Gesamt','Schnitt']=S_avg
+auswertung_bahnen.loc['Gesamt','Bahn 1']=S1
+auswertung_bahnen.loc['Gesamt','Bahn 2']=S2
+auswertung_bahnen.loc['Gesamt','Bahn 3']=S3
+auswertung_bahnen.loc['Gesamt','Bahn 4']=S4
+auswertung_bahnen.loc['Volle','Schnitt']=V_avg
+auswertung_bahnen.loc['Volle','Bahn 1']=V1
+auswertung_bahnen.loc['Volle','Bahn 2']=V2
+auswertung_bahnen.loc['Volle','Bahn 3']=V3
+auswertung_bahnen.loc['Volle','Bahn 4']=V4
+auswertung_bahnen.loc['Räumer','Schnitt']=R_avg
+auswertung_bahnen.loc['Räumer','Bahn 1']=R1
+auswertung_bahnen.loc['Räumer','Bahn 2']=R2
+auswertung_bahnen.loc['Räumer','Bahn 3']=R3
+auswertung_bahnen.loc['Räumer','Bahn 4']=R4
+auswertung_bahnen.loc['Fehler','Schnitt']=F_avg
+auswertung_bahnen.loc['Fehler','Bahn 1']=F1
+auswertung_bahnen.loc['Fehler','Bahn 2']=F2
+auswertung_bahnen.loc['Fehler','Bahn 3']=F3
+auswertung_bahnen.loc['Fehler','Bahn 4']=F4
+auswertung_bahnen.loc['Satzpunkte','Schnitt']=str(P_avg) + ' %'
+auswertung_bahnen.loc['Satzpunkte','Bahn 1']=str(P1) + ' %'
+auswertung_bahnen.loc['Satzpunkte','Bahn 2']=str(P2) + ' %'
+auswertung_bahnen.loc['Satzpunkte','Bahn 3']=str(P3) + ' %'
+auswertung_bahnen.loc['Satzpunkte','Bahn 4']=str(P4) + ' %'
 
-with b2_column:
-    st.subheader("Bahn :two:")
-    st.subheader(f'{S2}')
-    st.subheader(f'{V2}')
-    st.subheader(f'{R2}')
-    st.subheader(f'{F2}')
-    st.subheader(f'{P2} %')
-
-with b3_column:
-    st.subheader("Bahn :three:")
-    st.subheader(f'{S3}')
-    st.subheader(f'{V3}')
-    st.subheader(f'{R3}')
-    st.subheader(f'{F3}')
-    st.subheader(f'{P3} %')
-
-with b4_column:
-    st.subheader("Bahn :four:")
-    st.subheader(f'{S4}')
-    st.subheader(f'{V4}')
-    st.subheader(f'{R4}')
-    st.subheader(f'{F4}')
-    st.subheader(f'{P4} %')
+st.dataframe(auswertung_bahnen)
 
 st.markdown("---")
 
@@ -272,66 +279,75 @@ st.markdown("---")
 
 #Gesamtrekord
 max_GES=0 if df_selection['GES'].dropna().empty else int(round(df_selection['GES'].max(), 0))
-Gegner_max_GES=df_selection.query('GES==@max_GES')['Gegner'].squeeze()
-Ort_max_GES=df_selection.query('GES==@max_GES')['Ort'].squeeze()
-Date_max_GES=df_selection.query('GES==@max_GES')['Datum'].squeeze()
+Gegner_max_GES=df_selection.query('GES==@max_GES')['Gegner'].iloc[0]
+Ort_max_GES=df_selection.query('GES==@max_GES')['Ort'].iloc[0]
+Date_max_GES=df_selection.query('GES==@max_GES')['Datum'].iloc[0]
 
 #Vollen-Rekord
 max_V=0 if df_selection['Volle'].dropna().empty else int(round(df_selection['Volle'].max(), 0))
-Gegner_max_V=df_selection.query('Volle==@max_V')['Gegner'].squeeze()
-Ort_max_V=df_selection.query('Volle==@max_V')['Ort'].squeeze()
-Date_max_V=df_selection.query('Volle==@max_V')['Datum'].squeeze()
+Gegner_max_V=df_selection.query('Volle==@max_V')['Gegner'].iloc[0]
+Ort_max_V=df_selection.query('Volle==@max_V')['Ort'].iloc[0]
+Date_max_V=df_selection.query('Volle==@max_V')['Datum'].iloc[0]
 
 #Räumer-Rekord
 max_R=0 if df_selection['Räumer'].dropna().empty else int(round(df_selection['Räumer'].max(), 0))
-Gegner_max_R=df_selection.query('Räumer==@max_R')['Gegner'].squeeze()
-Ort_max_R=df_selection.query('Räumer==@max_R')['Ort'].squeeze()
-Date_max_R=df_selection.query('Räumer==@max_R')['Datum'].squeeze()
+Gegner_max_R=df_selection.query('Räumer==@max_R')['Gegner'].iloc[0]
+Ort_max_R=df_selection.query('Räumer==@max_R')['Ort'].iloc[0]
+Date_max_R=df_selection.query('Räumer==@max_R')['Datum'].iloc[0]
 
 #Bahn-Rekord
 col_maxes = df_selection[['S1', 'S2', 'S3', 'S4']].max()
 max_B = int(round(col_maxes.max(),0))
 column_with_overall_max = col_maxes.idxmax()
-Gegner_max_B=df_selection.loc[df_selection[column_with_overall_max] == max_B, 'Gegner'].squeeze()
-Ort_max_B=df_selection.loc[df_selection[column_with_overall_max] == max_B, 'Ort'].squeeze()
-Date_max_B=df_selection.loc[df_selection[column_with_overall_max] == max_B, 'Datum'].squeeze()
+Gegner_max_B=df_selection.loc[df_selection[column_with_overall_max] == max_B, 'Gegner'].iloc[0]
+Ort_max_B=df_selection.loc[df_selection[column_with_overall_max] == max_B, 'Ort'].iloc[0]
+Date_max_B=df_selection.loc[df_selection[column_with_overall_max] == max_B, 'Datum'].iloc[0]
 
 st.header('Rekorde :trophy: ')
 
-cat_column, max_column, geg_column, ort_column, date_column = st.columns(5)
+rekorde=pd.DataFrame(index=range(4), columns=range(4))
+rekorde.index=['Gesamt', 'Volle', 'Räumer', 'Bahn']
+rekorde.columns=['Ergebnis', 'Gegner', 'Ort', 'Datum']
 
-with cat_column:
-    st.subheader(" ")
-    st.subheader("Gesamt")
-    st.subheader("Volle")
-    st.subheader("Räumer")
-    st.subheader("Bahn")
+rekorde.loc['Gesamt','Ergebnis']=max_GES
+rekorde.loc['Gesamt','Gegner']=str(Gegner_max_GES)
+rekorde.loc['Gesamt','Ort']=str(Ort_max_GES)
+rekorde.loc['Gesamt','Datum']=str(Date_max_GES)
 
-with max_column:
-    st.subheader("Ergebnis")
-    st.subheader(f'{max_GES}')
-    st.subheader(f'{max_V}')
-    st.subheader(f'{max_R}')
-    st.subheader(f'{max_B}')
+rekorde.loc['Volle','Ergebnis']=max_V
+rekorde.loc['Volle','Gegner']=str(Gegner_max_V)
+rekorde.loc['Volle','Ort']=str(Ort_max_V)
+rekorde.loc['Volle','Datum']=str(Date_max_V)
 
-with geg_column:
-    st.subheader("Gegner")
-    st.markdown(f"### <span style='font-size: 20px'>{Gegner_max_GES}</span>", unsafe_allow_html=True)
-    st.markdown(f"### <span style='font-size: 20px'>{Gegner_max_V}</span>", unsafe_allow_html=True)
-    st.markdown(f"### <span style='font-size: 20px'>{Gegner_max_R}</span>", unsafe_allow_html=True)
-    st.markdown(f"### <span style='font-size: 20px'>{Gegner_max_B}</span>", unsafe_allow_html=True)
+rekorde.loc['Räumer','Ergebnis']=max_R
+rekorde.loc['Räumer','Gegner']=str(Gegner_max_R)
+rekorde.loc['Räumer','Ort']=str(Ort_max_R)
+rekorde.loc['Räumer','Datum']=str(Date_max_R)
+
+rekorde.loc['Bahn','Ergebnis']=max_B
+rekorde.loc['Bahn','Gegner']=str(Gegner_max_B)
+rekorde.loc['Bahn','Ort']=str(Ort_max_B)
+rekorde.loc['Bahn','Datum']=str(Date_max_B)
 
 
-with ort_column:
-    st.subheader("Ort")
-    st.markdown(f"### <span style='font-size: 20px'>{Ort_max_GES}</span>", unsafe_allow_html=True)
-    st.markdown(f"### <span style='font-size: 20px'>{Ort_max_V}</span>", unsafe_allow_html=True)
-    st.markdown(f"### <span style='font-size: 20px'>{Ort_max_R}</span>", unsafe_allow_html=True)
-    st.markdown(f"### <span style='font-size: 20px'>{Ort_max_B}</span>", unsafe_allow_html=True)
 
-with date_column:
-    st.subheader("Datum")
-    st.markdown(f"### <span style='font-size: 20px'>{Date_max_GES}</span>", unsafe_allow_html=True)
-    st.markdown(f"### <span style='font-size: 20px'>{Date_max_V}</span>", unsafe_allow_html=True)
-    st.markdown(f"### <span style='font-size: 20px'>{Date_max_R}</span>", unsafe_allow_html=True)
-    st.markdown(f"### <span style='font-size: 20px'>{Date_max_B}</span>", unsafe_allow_html=True)
+st.dataframe(rekorde)
+st.markdown("---")
+
+
+#Positionen------------------------------------------------------------
+
+st.header('Position :game_die: ')
+
+position=pd.DataFrame(index=range(2), columns=range(6))
+position.index=['Anzahl', 'Gewinnrate in %']
+position.columns=[1,2,3,4,5,6]
+
+for i in range(6):
+    value_counts=(df_selection['Position']==i+1).sum()
+    position.loc['Anzahl',i+1]=value_counts
+    position_df=df_selection[df_selection['Position']==i+1][['Datum','MP']]
+    win_rate=position_df['MP'].mean()
+    position.loc['Gewinnrate in %',i+1]=win_rate*100
+
+st.dataframe(position)
