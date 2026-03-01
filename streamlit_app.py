@@ -16,7 +16,9 @@ def get_data_from_excel():
                        usecols='B:AM', header=1)
     df_23_24 = pd.read_excel(io='HSV23_24.xlsx', sheet_name='Eingabe',
                        usecols='B:AM', header=1)
-    df = pd.concat([df_23_24, df_24_25, df_25_26], ignore_index=True)
+    df_22_23 = pd.read_excel(io='HSV22_23.xlsx', sheet_name='Eingabe',
+                       usecols='B:AM', header=1)
+    df = pd.concat([df_22_23, df_23_24, df_24_25, df_25_26], ignore_index=True)
     df = df.drop(columns=['S-NR','ID','Team',])
     df=df.reset_index(drop=True)
     df=df.reindex(columns=['Name','Datum','Spieltag', 'Gegner', 'Ort', 'Modus',
