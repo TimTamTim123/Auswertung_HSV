@@ -3,6 +3,8 @@ import streamlit as st #pip install streamlit
 import plotly.express as px #pip install plotly-express
 import plotly.graph_objects as go
 import numpy as np
+from pathlib import Path
+import os
 
 st.set_page_config(page_title='Auswertung HSV',
                    page_icon=":bowling:",
@@ -47,7 +49,8 @@ def get_saison(date):
 
 df['Saison'] = df['Datum'].apply(get_saison)
 
-tab1, tab2 = st.tabs(["Spieler Analyse", "Vergleichstabelle"])
+tab1, tab2, tab3 = st.tabs(["Spieler Analyse", "Vergleichstabelle", "Auswertung Heimbahnen"])
+
 
 with tab1:
     # Filter horizontal als erste Zeile
@@ -249,72 +252,66 @@ with tab1:
     st.markdown("---")
 
     # Auswertung nach Bahnen
-    if df_selection[['S1','S2','S3','S4']].stack().empty: S_avg=0
-    else: S_avg=int(round(df_selection[['S1','S2','S3','S4']].stack().mean(), 0))
-    S1 = 0 if df_selection['S1'].dropna().empty else int(round(df_selection['S1'].mean(), 0))
-    S2 = 0 if df_selection['S2'].dropna().empty else int(round(df_selection['S2'].mean(), 0))
-    S3 = 0 if df_selection['S3'].dropna().empty else int(round(df_selection['S3'].mean(), 0))
-    S4 = 0 if df_selection['S4'].dropna().empty else int(round(df_selection['S4'].mean(), 0))
+    # Gesamt Bahn
+    cols_S = ['S1', 'S2', 'S3', 'S4']
 
-    if df_selection[['V1','V2','V3','V4']].stack().empty: V_avg=0
-    else: V_avg=int(round(df_selection[['V1','V2','V3','V4']].stack().mean(), 0))
-    V1 = 0 if df_selection['V1'].dropna().empty else int(round(df_selection['V1'].mean(), 0))
-    V2 = 0 if df_selection['V2'].dropna().empty else int(round(df_selection['V2'].mean(), 0))
-    V3 = 0 if df_selection['V3'].dropna().empty else int(round(df_selection['V3'].mean(), 0))
-    V4 = 0 if df_selection['V4'].dropna().empty else int(round(df_selection['V4'].mean(), 0))
+    # Mittelwerte pro Spalte berechnen:
+    # - NaN werden automatisch ignoriert
+    # - wenn eine Spalte nur NaN enthält → wird zu 0
+    # - Ergebnis wird auf ganze Zahlen gerundet
+    means_S = df_selection[cols_S].mean().fillna(0).round(0).astype(int)
 
-    if df_selection[['R1','R2','R3','R4']].stack().empty: R_avg=0
-    else: R_avg=int(round(df_selection[['R1','R2','R3','R4']].stack().mean(), 0))
-    R1 = 0 if df_selection['R1'].dropna().empty else int(round(df_selection['R1'].mean(), 0))
-    R2 = 0 if df_selection['R2'].dropna().empty else int(round(df_selection['R2'].mean(), 0))
-    R3 = 0 if df_selection['R3'].dropna().empty else int(round(df_selection['R3'].mean(), 0))
-    R4 = 0 if df_selection['R4'].dropna().empty else int(round(df_selection['R4'].mean(), 0))
+    S1 = means_S['S1']
+    S2 = means_S['S2']
+    S3 = means_S['S3']
+    S4 = means_S['S4']
 
-    if df_selection[['F1','F2','F3','F4']].stack().empty: F_avg=0
-    else: F_avg=int(round(df_selection[['F1','F2','F3','F4']].stack().mean(), 0))
-    F1 = 0 if df_selection['F1'].dropna().empty else int(round(df_selection['F1'].mean(), 0))
-    F2 = 0 if df_selection['F2'].dropna().empty else int(round(df_selection['F2'].mean(), 0))
-    F3 = 0 if df_selection['F3'].dropna().empty else int(round(df_selection['F3'].mean(), 0))
-    F4 = 0 if df_selection['F4'].dropna().empty else int(round(df_selection['F4'].mean(), 0))
+    # Gesamt-Durchschnitt über alle Spalten:
+    # - zuerst Mittelwert je Spalte, dann Durchschnitt dieser Werte
+    # - wenn alle Werte NaN sind → Ergebnis 0
+    S_avg = int(round(df_selection[cols_S].mean().mean(), 0)) if df_selection[cols_S].notna().any().any() else 0
 
-    if df_selection[['S1P','S2P','S3P','S4P']].stack().empty: P_avg=0
-    else: P_avg=int(round(df_selection[['S1P','S2P','S3P','S4P']].stack().mean()*100, 0))
-    P1 = 0 if df_selection['S1P'].dropna().empty else int(round(df_selection['S1P'].mean()*100, 0))
-    P2 = 0 if df_selection['S2P'].dropna().empty else int(round(df_selection['S2P'].mean()*100, 0))
-    P3 = 0 if df_selection['S3P'].dropna().empty else int(round(df_selection['S3P'].mean()*100, 0))
-    P4 = 0 if df_selection['S4P'].dropna().empty else int(round(df_selection['S4P'].mean()*100, 0))
+    cols_V = ['V1', 'V2', 'V3', 'V4']
+    means_V=df_selection[cols_V].mean().fillna(0).round(0).astype(int)
+    V1 = means_V ['V1']
+    V2 = means_V['V2']
+    V3 = means_V['V3']
+    V4 = means_V['V4']
+    V_avg=int(round(df_selection[cols_V].mean().mean(),0)) if df_selection[cols_V].notna().any().any() else 0
+
+    cols_R = ['R1', 'R2', 'R3', 'R4']
+    means_R = df_selection[cols_R].mean().fillna(0).round(0).astype(int)
+    R1 = means_R['R1']
+    R2 = means_R['R2']
+    R3 = means_R['R3']
+    R4 = means_R['R4']
+    R_avg = int(round(df_selection[cols_R].mean().mean(), 0)) if df_selection[cols_R].notna().any().any() else 0
+
+    cols_F = ['F1', 'F2', 'F3', 'F4']
+    means_F = df_selection[cols_F].mean().fillna(0).round(0).astype(int)
+    F1 = means_F['F1']
+    F2 = means_F['F2']
+    F3 = means_F['F3']
+    F4 = means_F['F4']
+    F_avg = int(round(df_selection[cols_F].mean().mean(), 0)) if df_selection[cols_F].notna().any().any() else 0
+
+    cols_P = ['S1P', 'S2P', 'S3P', 'S4P']
+    means_P = (df_selection[cols_P].mean() * 100).fillna(0).round(0).astype(int)
+    P1 = means_P['S1P']
+    P2 = means_P['S2P']
+    P3 = means_P['S3P']
+    P4 = means_P['S4P']
+    P_avg = int(round(df_selection[cols_P].mean().mean() * 100, 0)) if df_selection[cols_P].notna().any().any() else 0
 
     st.header("Auswertung nach Bahnen :bowling:")
 
-    auswertung_bahnen=pd.DataFrame(index=range(5), columns=range(5))
-    auswertung_bahnen.index=['Gesamt', 'Volle', 'Räumer', 'Fehler', 'Satzpunkte']
-    auswertung_bahnen.columns=['Schnitt', 'Bahn 1', 'Bahn 2', 'Bahn 3', 'Bahn 4']
-
-    auswertung_bahnen.loc['Gesamt','Schnitt']=S_avg
-    auswertung_bahnen.loc['Gesamt','Bahn 1']=S1
-    auswertung_bahnen.loc['Gesamt','Bahn 2']=S2
-    auswertung_bahnen.loc['Gesamt','Bahn 3']=S3
-    auswertung_bahnen.loc['Gesamt','Bahn 4']=S4
-    auswertung_bahnen.loc['Volle','Schnitt']=V_avg
-    auswertung_bahnen.loc['Volle','Bahn 1']=V1
-    auswertung_bahnen.loc['Volle','Bahn 2']=V2
-    auswertung_bahnen.loc['Volle','Bahn 3']=V3
-    auswertung_bahnen.loc['Volle','Bahn 4']=V4
-    auswertung_bahnen.loc['Räumer','Schnitt']=R_avg
-    auswertung_bahnen.loc['Räumer','Bahn 1']=R1
-    auswertung_bahnen.loc['Räumer','Bahn 2']=R2
-    auswertung_bahnen.loc['Räumer','Bahn 3']=R3
-    auswertung_bahnen.loc['Räumer','Bahn 4']=R4
-    auswertung_bahnen.loc['Fehler','Schnitt']=F_avg
-    auswertung_bahnen.loc['Fehler','Bahn 1']=F1
-    auswertung_bahnen.loc['Fehler','Bahn 2']=F2
-    auswertung_bahnen.loc['Fehler','Bahn 3']=F3
-    auswertung_bahnen.loc['Fehler','Bahn 4']=F4
-    auswertung_bahnen.loc['Satzpunkte','Schnitt']=str(P_avg) + ' %'
-    auswertung_bahnen.loc['Satzpunkte','Bahn 1']=str(P1) + ' %'
-    auswertung_bahnen.loc['Satzpunkte','Bahn 2']=str(P2) + ' %'
-    auswertung_bahnen.loc['Satzpunkte','Bahn 3']=str(P3) + ' %'
-    auswertung_bahnen.loc['Satzpunkte','Bahn 4']=str(P4) + ' %'
+    auswertung_bahnen = pd.DataFrame({
+        'Schnitt': [S_avg, V_avg, R_avg, F_avg, f"{P_avg} %"],
+        'Bahn 1': [S1, V1, R1, F1, f"{P1} %"],
+        'Bahn 2': [S2, V2, R2, F2, f"{P2} %"],
+        'Bahn 3': [S3, V3, R3, F3, f"{P3} %"],
+        'Bahn 4': [S4, V4, R4, F4, f"{P4} %"],
+    }, index=['Gesamt', 'Volle', 'Räumer', 'Fehler', 'Satzpunkte'])
 
     st.dataframe(auswertung_bahnen)
 
@@ -354,29 +351,12 @@ with tab1:
 
     st.header('Rekorde :trophy: ')
 
-    rekorde=pd.DataFrame(index=range(4), columns=range(4))
-    rekorde.index=['Gesamt', 'Volle', 'Räumer', 'Bahn']
-    rekorde.columns=['Ergebnis', 'Gegner', 'Ort', 'Datum']
-
-    rekorde.loc['Gesamt','Ergebnis']=max_GES
-    rekorde.loc['Gesamt','Gegner']=str(Gegner_max_GES)
-    rekorde.loc['Gesamt','Ort']=str(Ort_max_GES)
-    rekorde.loc['Gesamt','Datum']=str(Date_max_GES)
-
-    rekorde.loc['Volle','Ergebnis']=max_V
-    rekorde.loc['Volle','Gegner']=str(Gegner_max_V)
-    rekorde.loc['Volle','Ort']=str(Ort_max_V)
-    rekorde.loc['Volle','Datum']=str(Date_max_V)
-
-    rekorde.loc['Räumer','Ergebnis']=max_R
-    rekorde.loc['Räumer','Gegner']=str(Gegner_max_R)
-    rekorde.loc['Räumer','Ort']=str(Ort_max_R)
-    rekorde.loc['Räumer','Datum']=str(Date_max_R)
-
-    rekorde.loc['Bahn','Ergebnis']=max_B
-    rekorde.loc['Bahn','Gegner']=str(Gegner_max_B)
-    rekorde.loc['Bahn','Ort']=str(Ort_max_B)
-    rekorde.loc['Bahn','Datum']=str(Date_max_B)
+    rekorde = pd.DataFrame({
+        'Ergebnis': [max_GES, max_V, max_R, max_B],
+        'Gegner': [str(Gegner_max_GES), str(Gegner_max_V), str(Gegner_max_R), str(Gegner_max_B)],
+        'Ort': [str(Ort_max_GES), str(Ort_max_V), str(Ort_max_R), str(Ort_max_B)],
+        'Datum': [str(Date_max_GES), str(Date_max_V), str(Date_max_R), str(Date_max_B)],
+    }, index=['Gesamt', 'Volle', 'Räumer', 'Bahn'])
 
 
     st.dataframe(rekorde)
@@ -403,7 +383,7 @@ with tab1:
 
     # Volle - Räumer - Verhältnis------------------------------------------------------------
 
-    st.header('Volle-Räumer-Verhältnis :game_die: ')
+    st.header(' :chart_with_upwards_trend: Volle-Räumer-Verhältnis :chart_with_downwards_trend: ')
 
     x_min, x_max = 200, 450
     y_min, y_max = 50, 250
@@ -496,6 +476,301 @@ with tab2:
         st.dataframe(df_compare1)
     with Col2:
         st.dataframe(df_compare2)
+
+
+
+with tab3:
+    st.title(':house_with_garden: Auswertung Heimbahnen :house_with_garden:')
+    st.markdown("##")
+
+
+    # Daten von den Scoresheets laden
+    @st.cache_data
+    def load_scoresheets():
+        return pd.read_parquet("Scorsheets_Hirschfeld.parquet")
+
+
+    scoresheets_df = load_scoresheets()
+    scoresheets_df.iloc[:, 0] = pd.to_datetime(scoresheets_df.iloc[:, 0]).dt.year
+    scoresheets_df=scoresheets_df.drop(scoresheets_df.columns[[1,2]],axis=1)
+
+    # Filter horizontal als erste Zeile
+    col1, col2 = st.columns(2)
+
+    # Annahme: erste Spalte enthält das Jahr (oder wurde bereits extrahiert)
+    #Namensfilter
+    with col1:
+        names = scoresheets_df.iloc[:, 1].dropna().unique()
+        selected_name = st.selectbox("Name wählen", sorted(names))
+
+    # Nach Name filtern
+    filtered_scoresheets_df = scoresheets_df[
+        scoresheets_df.iloc[:, 1] == selected_name
+        ]
+
+    # Jahres-Filter (Spalte 2)
+    with col2:
+        min_year = int(filtered_scoresheets_df.iloc[:, 0].min())
+        max_year = int(filtered_scoresheets_df.iloc[:, 0].max())
+
+        if min_year == max_year:
+            st.info(f"Nur ein Jahr vorhanden: {min_year}")
+            year_range = (min_year, max_year)
+        else:
+            year_range = st.slider(
+                "Wähle Jahr(e)",
+                min_value=min_year,
+                max_value=max_year,
+                value=(min_year, max_year)
+            )
+
+    # Nach Jahr filtern
+    final_df = filtered_scoresheets_df[
+        (filtered_scoresheets_df.iloc[:, 0] >= year_range[0]) &
+        (filtered_scoresheets_df.iloc[:, 0] <= year_range[1])
+        ]
+    no_games=(final_df.iloc[:,2]==120).sum()
+
+    st.write(f"Du hast in der Zeitspanne {no_games} aufgezeichnete Spiele gespielt")
+
+    st.header(" :clipboard: Auswertung Hirschelder Bahnen :clipboard: ")
+    Rows = []
+
+    for bahn in range (4):
+        volle_hb=final_df[(final_df.iloc[:,7]==0) & (final_df.iloc[:,9]==bahn)].iloc[:,12].mean()
+        räumer_hb = final_df[(final_df.iloc[:, 7] == 1) & (final_df.iloc[:, 9] == bahn)].iloc[:, 12].mean()
+        gesamt_hb = volle_hb+räumer_hb
+        fehler_hb = final_df[final_df.iloc[:, 9] == bahn].iloc[:, 13].mean()
+        max_volle_hb=final_df[(final_df.iloc[:,7]==0) & (final_df.iloc[:,9]==bahn)].iloc[:,12].max()
+        min_volle_hb = final_df[(final_df.iloc[:, 7] == 0) & (final_df.iloc[:, 9] == bahn)].iloc[:, 12].min()
+        max_räumer_hb = final_df[(final_df.iloc[:, 7] == 1) & (final_df.iloc[:, 9] == bahn)].iloc[:, 12].max()
+        min_räumer_hb = final_df[(final_df.iloc[:, 7] == 1) & (final_df.iloc[:, 9] == bahn)].iloc[:, 12].min()
+        max_fehler_hb = final_df[final_df.iloc[:, 9] == bahn].iloc[:, 13].max()
+        min_fehler_hb = final_df[final_df.iloc[:, 9] == bahn].iloc[:, 13].min()
+        max_ges_hb = (final_df.loc[(final_df.iloc[:, 3] == 15) & (final_df.iloc[:,9]==bahn)].iloc[:, 12]
+                      .reset_index(drop=True).groupby(lambda i: i // 2).sum().max())
+        min_ges_hb = (final_df.loc[(final_df.iloc[:, 3] == 15) & (final_df.iloc[:,9]==bahn)].iloc[:, 12]
+                      .reset_index(drop=True).groupby(lambda i: i // 2).sum().min())
+
+        Rows.append([bahn, round(volle_hb, 2), round(räumer_hb, 2), round(gesamt_hb, 2), round(fehler_hb, 2),
+                     round(max_volle_hb, 0), round(min_volle_hb, 0),  round(max_räumer_hb, 0), round(min_räumer_hb,0),
+                     round(max_fehler_hb, 0), round(min_fehler_hb, 0), round(max_ges_hb, 0), round(min_ges_hb, 0)])
+    Bahnen_df = pd.DataFrame(Rows, columns=[
+        "Bahn", "Volle", "Räumer", "Gesamt", "Fehler",
+        "Max. Volle", "Min. Volle",
+        "Max. Räumer", "Min. Räumer",
+        "Max. Fehler", "Min. Fehler",
+        "Max. Gesamt", "Min. Gesamt"
+    ])
+
+    Bahnen_df["Bahn"] = Bahnen_df["Bahn"] + 1
+
+    num_cols = 4
+
+    rows_bahn = np.array_split(
+        Bahnen_df,
+        np.ceil(len(Bahnen_df) / num_cols)
+    )
+
+    for row_group in rows_bahn:
+        cols = st.columns(len(row_group))
+
+        for col, (_, row) in zip(cols, row_group.iterrows()):
+            with col:
+                html = f"""
+    <div style="background-color:#111827;
+                padding:16px;
+                border-radius:14px;
+                text-align:center;
+                color:white;
+                box-shadow:0 6px 14px rgba(0,0,0,0.4);">
+
+    <h3>Bahn {int(row['Bahn'])}</h3>
+
+    <p>Volle: {row['Volle']:.2f}</p>
+    <p style="font-size:12px;color:#9ca3af;">
+    Max: {row['Max. Volle']:.2f} | Min: {row['Min. Volle']:.2f}
+    </p>
+
+    <p>Räumer: {row['Räumer']:.2f}</p>
+    <p style="font-size:12px;color:#9ca3af;">
+    Max: {row['Max. Räumer']:.2f} | Min: {row['Min. Räumer']:.2f}
+    </p>
+
+    <p style="font-size:24px;font-weight:bold;color:#4ade80;">
+    Gesamt: {row['Gesamt']:.2f}
+    </p>
+    <p style="font-size:12px;color:#9ca3af;">
+    Max: {row['Max. Gesamt']:.2f} | Min: {row['Min. Gesamt']:.2f}
+    </p>
+
+    <p style="color:#f87171;">
+    Fehler: {row['Fehler']:.2f}
+    </p>
+    <p style="font-size:12px;color:#9ca3af;">
+    Max: {row['Max. Fehler']:.2f} | Min: {row['Min. Fehler']:.2f}
+    </p>
+
+    </div>
+    """
+                st.markdown(html, unsafe_allow_html=True)
+
+    st.header(" :microscope: Durchschnittlicher Wurfertrag pro Spiel :microscope:")
+    st.text("Gibt an, wie oft du im Schnitt welche Kegelanzahl getroffen hast.")
+    st.text("Beispiel: Steht bei - Volle 5 - eine 12.34 spielst du im Schnitt pro Spiel 12 mal eine 5 in die Vollen.")
+    rows = []
+
+    for wurf in range(10):
+        volle_val = ((final_df.iloc[:, 7] == 0) & (final_df.iloc[:, 4] == wurf)).sum() / no_games
+        räumer_val = ((final_df.iloc[:, 7] == 1) & (final_df.iloc[:, 4] == wurf)).sum() / no_games
+        gesamt_val = (final_df.iloc[:, 4] == wurf).sum() / no_games
+        w16_val = ((final_df.iloc[:,3]==1) & (final_df.iloc[:,7]==1) & (final_df.iloc[:,4] == wurf)).sum() /no_games
+        anwurf_val = ((final_df.iloc[:,7] == 1) & (final_df.iloc[:, 4] == wurf) & (final_df.iloc[:, 5].shift(1) == 511)).sum() / no_games
+
+        rows.append([wurf, round(volle_val, 2), round(räumer_val, 2), round(gesamt_val, 2), round(w16_val, 2), round(anwurf_val, 2)] )
+
+    Wurfertrag_df = pd.DataFrame(rows, columns=["Kegel getroffen", "Volle", "Räumer", "Gesamt","Wurf 16","Anwurf"])
+
+    st.subheader("Volle (grün) und Räumer (gelb)")
+    fig_vr = px.bar(Wurfertrag_df,x="Kegel getroffen",y=["Volle","Räumer"],barmode="group", text_auto=".2f",
+                    color_discrete_map={"Volle":"green","Räumer":"orange"})
+    fig_vr.update_traces(textposition='outside')
+    fig_vr.update_xaxes(tickmode='linear', title_text="Kegel getroffen")
+    fig_vr.update_yaxes(title_text="durchschnittliche Anzahl pro Spiel")
+    st.plotly_chart(fig_vr, use_container_width=True)
+
+    st.subheader("Wurf 16 (rot) und Anwurf (blau)")
+    fig_a16 = px.bar(Wurfertrag_df, x="Kegel getroffen", y=["Wurf 16", "Anwurf"], barmode="group", text_auto=".2f",
+                     color_discrete_map={"Wurf 16":"red","Anwurf":"blue"})
+    fig_a16.update_traces(textposition='outside')
+    fig_a16.update_xaxes(tickmode='linear', title_text="Kegel getroffen")
+    fig_a16.update_yaxes(title_text="durchschnittliche Anzahl pro Spiel")
+    st.plotly_chart(fig_a16, use_container_width=True)
+
+
+    def get_image_path(value):
+        value=int(value)
+        return os.path.join("Kegelbilder", f"{value}.png")  # ggf. .jpg anpassen
+    def render_image(path):
+        if os.path.exists(path):
+            return f'<img src="{path}" width="50">'
+        return "Kein Bild"
+
+
+    st.header(" :crystal_ball: Am häufigsten gespielte Bilder:crystal_ball:")
+
+    col_b1, col_b2, col_b3 = st.columns(3)
+
+    # --------------------
+    # Volle
+    # --------------------
+    with col_b1:
+        st.subheader("Volle")
+        st.text("Das sind die 10 Bilder, welche du am häufigsten in Vollen triffst")
+
+        top10_v = (
+            final_df[final_df.iloc[:, 7] == 0]
+            .iloc[:, 5]
+            .value_counts()
+            .head(10)
+        )
+
+        top10_v_df = top10_v.reset_index()
+        top10_v_df.columns = ["Wert", "Anzahl"]
+        top10_v_df["Anzahl"] = round(top10_v_df["Anzahl"] / no_games, 2)
+
+        for _, row in top10_v_df.iterrows():
+            st.write(f"{row['Anzahl']} mal pro Spiel")
+            st.image(get_image_path(row["Wert"]), width=80)
+
+    # --------------------
+    # Fehler
+    # --------------------
+    with col_b2:
+        st.subheader("Fehler")
+        st.text("Das sind die 10 Bilder, wo du am häufigsten Fehler machst.")
+
+        top10_f = (
+            final_df[final_df.iloc[:, 6] == 1]
+            .iloc[:, 5]
+            .value_counts()
+            .head(10)
+        )
+
+        top10_f_df = top10_f.reset_index()
+        top10_f_df.columns = ["Wert", "Anzahl"]
+        top10_f_df["Anzahl"] = round(top10_f_df["Anzahl"] / no_games, 2)
+
+        for _, row in top10_f_df.iterrows():
+            st.write(f"{row['Anzahl']} mal pro Spiel")
+            st.image(get_image_path(row["Wert"]), width=80)
+
+    # --------------------
+    # Anwürfe
+    # --------------------
+    with col_b3:
+        st.subheader("Anwürfe in den Räumern")
+        st.text("Das sind die 10 Bilder, welche du am häufigsten in den Räumern anwürfst")
+        mask = (
+            (final_df.iloc[:, 7] == 1) &
+            (final_df.iloc[:, 5].shift(1) == 511)
+        )
+
+        top10_a = (
+            final_df[mask]
+            .iloc[:, 5]
+            .value_counts()
+            .head(10)
+        )
+
+        top10_a_df = top10_a.reset_index()
+        top10_a_df.columns = ["Wert", "Anzahl"]
+        top10_a_df["Anzahl"] = round(top10_a_df["Anzahl"] / no_games, 2)
+
+        for _, row in top10_a_df.iterrows():
+            st.write(f"{row['Anzahl']} mal pro Spiel")
+            st.image(get_image_path(row["Wert"]), width=80)
+
+    st.header("Weitere Statistiken")
+    st.subheader(":stopwatch:Zeit:stopwatch:")
+    st.text(f"Schnellste Bahn: {12-final_df[(final_df.iloc[:,3]==15)&(final_df.iloc[:,7]==1)].iloc[:,15].max()/10} Minuten")
+    st.text(f"Langsamste Bahn: {12-final_df[(final_df.iloc[:,3]==15)&(final_df.iloc[:,7]==1)].iloc[:,15].min()/10} Minuten")
+    st.text(f"durchschnittliche Zeit pro Bahn: {round(12-final_df[(final_df.iloc[:,3]==15)&(final_df.iloc[:,7]==1)].iloc[:,15].mean()/10,2)} Minuten")
+
+    st.subheader(" :warning: Karten :warning:")
+    denominator_yellow = final_df[final_df.iloc[:, 2] == 120].iloc[:, 10].sum()
+
+    st.text(
+        f"Aller {round(no_games / denominator_yellow, 2) if denominator_yellow != 0 else '---'} Spiele bekommst du eine gelbe Karte."
+    )
+
+    denominator_red = final_df[final_df.iloc[:, 2] == 120].iloc[:, 11].sum()
+
+    st.text(
+        f"Aller {round(no_games / denominator_red, 2) if denominator_red != 0 else '---'} Spiele bekommst du eine rote Karte."
+    )
+
+    st.header(":pager: Wurfanalyse :pager:")
+    Wurf=st.slider("Wähle einen Wurf", min_value=1, max_value=120,value=1)
+
+    st.text("Die Wahrscheinlichkeit, welche Zahl du bei welchem Wurf spielst.")
+    st.text("Je mehr Spiele von dir aufgezeichnet wurden, desto besser sind die Wahrscheinlichkeiten.")
+
+    wa_list =[]
+    for p in range(10):
+        wa = round(((final_df.iloc[:, 2] == Wurf) & (final_df.iloc[:, 4] == p)).sum() / no_games * 100,0)
+        wb_max = final_df[final_df.iloc[:,2]== Wurf].iloc[:,5].max()
+        wa_list.append({
+            "Wurf": p,
+            "WA": wa
+        })
+    wa_df = pd.DataFrame(wa_list)
+
+    fig_wa = px.bar(wa_df, x="Wurf", y="WA",text_auto=".2f")
+    fig_wa.update_traces(textposition='outside')
+    fig_wa.update_xaxes(tickmode='linear', title_text="Kegel getroffen")
+    fig_wa.update_yaxes(title_text="Wahrscheinlichkeit in %")
+    st.plotly_chart(fig_wa, use_container_width=True)
 
 
 
