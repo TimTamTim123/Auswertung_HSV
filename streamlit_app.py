@@ -112,13 +112,14 @@ with tab1:
     average_clearoff=int(round(df_selection['Räumer'].mean(),0))
     average_faults=int(round(df_selection['Fehler'].mean(),0))
     max_score=int(df_selection['GES'].max())
-    person=df_selection['Name'].unique().squeeze()
+    person=df_selection['Name'].unique()
+    person=str(person)
     #Trend
     m,b=np.polyfit(df_selection['Time'],df_selection['GES'],1)
     m=round(m*7,2)
     STABW=int(round(df_selection['GES'].std(),0))
 
-    st.header(person)
+    st.header(name)
     first_column, second_column = st.columns(2)
     with first_column:
         st.subheader("Durchschnittliches Ergebnis")
@@ -491,7 +492,8 @@ with tab3:
 
 
     scoresheets_df = load_scoresheets()
-    scoresheets_df.iloc[:, 0] = pd.to_datetime(scoresheets_df.iloc[:, 0]).dt.year
+    scoresheets_df["Datum"] = pd.to_datetime(scoresheets_df.iloc[:, 0], errors="coerce")
+    scoresheets_df["Jahr"] = scoresheets_df["Datum"].dt.year
     scoresheets_df=scoresheets_df.drop(scoresheets_df.columns[[1,2]],axis=1)
 
     # Filter horizontal als erste Zeile
@@ -510,8 +512,8 @@ with tab3:
 
     # Jahres-Filter (Spalte 2)
     with col2:
-        min_year = int(filtered_scoresheets_df.iloc[:, 0].min())
-        max_year = int(filtered_scoresheets_df.iloc[:, 0].max())
+        min_year = int(filtered_scoresheets_df["Jahr"].min())
+        max_year = int(filtered_scoresheets_df["Jahr"].max())
 
         if min_year == max_year:
             st.info(f"Nur ein Jahr vorhanden: {min_year}")
@@ -526,9 +528,9 @@ with tab3:
 
     # Nach Jahr filtern
     final_df = filtered_scoresheets_df[
-        (filtered_scoresheets_df.iloc[:, 0] >= year_range[0]) &
-        (filtered_scoresheets_df.iloc[:, 0] <= year_range[1])
-        ]
+        (filtered_scoresheets_df["Jahr"] >= year_range[0]) &
+        (filtered_scoresheets_df["Jahr"] <= year_range[1])
+    ]
     no_games=(final_df.iloc[:,2]==120).sum()
 
     st.write(f"Du hast in der Zeitspanne {no_games} aufgezeichnete Spiele gespielt")
@@ -567,10 +569,10 @@ with tab3:
 
     num_cols = 4
 
-    rows_bahn = np.array_split(
-        Bahnen_df,
-        np.ceil(len(Bahnen_df) / num_cols)
-    )
+    rows_bahn = [
+        Bahnen_df.iloc[i:i + num_cols]
+        for i in range(0, len(Bahnen_df), num_cols)
+    ]
 
     for row_group in rows_bahn:
         cols = st.columns(len(row_group))
@@ -647,10 +649,10 @@ with tab3:
     fig_a16.update_yaxes(title_text="durchschnittliche Anzahl pro Spiel")
     st.plotly_chart(fig_a16, use_container_width=True)
 
-
+    BASE_DIR=os.path.dirname(os.path.abspath(__file__))
     def get_image_path(value):
         value=int(value)
-        return os.path.join("Kegelbilder", f"{value}.png")  # ggf. .jpg anpassen
+        return os.path.join(BASE_DIR, "kegelbilder", f"{value}.png")  # ggf. .jpg anpassen
     def render_image(path):
         if os.path.exists(path):
             return f'<img src="{path}" width="50">'
