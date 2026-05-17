@@ -119,36 +119,145 @@ with tab1:
     m=round(m*7,2)
     STABW=int(round(df_selection['GES'].std(),0))
 
-    st.header(name)
-    first_column, second_column = st.columns(2)
-    with first_column:
-        st.subheader("Durchschnittliches Ergebnis")
-        f"{average_score} Holz"
+    # ---------------------------------------------------
+    # CSS Styling
+    # ---------------------------------------------------
+    st.markdown("""
+    <style>
 
-        st.subheader("Bestes Ergebnis")
-        f"{max_score} Holz"
+    .metric-card {
+        background: linear-gradient(145deg, #1f1f1f, #2b2b2b);
+        padding: 22px;
+        border-radius: 18px;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 6px 16px rgba(0,0,0,0.25);
+        transition: 0.2s ease-in-out;
+        margin-bottom: 18px;
+    }
 
-        st.subheader("Durchschnittliche Mannschaftspunkte")
-        f"{average_points} %"
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 22px rgba(0,0,0,0.35);
+    }
 
-        st.subheader("Trend")
-        f'{m} Holz pro Woche'
+    .metric-title {
+        font-size: 0.95rem;
+        color: #b5b5b5;
+        margin-bottom: 10px;
+        font-weight: 500;
+    }
 
-    with second_column:
-        st.subheader("Durchschnittliche Volle")
-        f"{average_all} Holz"
+    .metric-value {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: white;
+        line-height: 1.2;
+    }
 
-        st.subheader("Durchschnittliche Räumer")
-        f"{average_clearoff} Holz"
+    .metric-unit {
+        font-size: 1rem;
+        color: #4CAF50;
+        margin-top: 5px;
+    }
 
-        st.subheader("Durchschnittliche Fehler")
-        f"{average_faults} Fehler"
+    .dashboard-title {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 25px;
+    }
 
-        st.subheader("Standartabweichung")
-        f'± {STABW} Holz vom Durchschnitt'
+    </style>
+    """, unsafe_allow_html=True)
+
+    # ---------------------------------------------------
+    # Header
+    # ---------------------------------------------------
+    st.markdown(
+        f'<div class="dashboard-title">📊 {name}</div>',
+        unsafe_allow_html=True
+    )
+
+    # ---------------------------------------------------
+    # Layout
+    # ---------------------------------------------------
+    col1, col2 = st.columns(2)
+
+    # ---------------------------------------------------
+    # LEFT COLUMN
+    # ---------------------------------------------------
+    with col1:
+
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">🎯 Durchschnittliches Ergebnis</div>
+            <div class="metric-value">{average_score}</div>
+            <div class="metric-unit">Holz</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">🏆 Bestes Ergebnis</div>
+            <div class="metric-value">{max_score}</div>
+            <div class="metric-unit">Holz</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">👥 Durchschnittliche Mannschaftspunkte</div>
+            <div class="metric-value">{average_points}</div>
+            <div class="metric-unit">%</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">📈 Trend</div>
+            <div class="metric-value">{m}</div>
+            <div class="metric-unit">Holz pro Woche</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    # ---------------------------------------------------
+    # RIGHT COLUMN
+    # ---------------------------------------------------
+    with col2:
+
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">🎳 Durchschnittliche Volle</div>
+            <div class="metric-value">{average_all}</div>
+            <div class="metric-unit">Holz</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">🧹 Durchschnittliche Räumer</div>
+            <div class="metric-value">{average_clearoff}</div>
+            <div class="metric-unit">Holz</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">❌ Durchschnittliche Fehler</div>
+            <div class="metric-value">{average_faults}</div>
+            <div class="metric-unit">Fehler</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+        st.markdown(f"""
+        <div class="metric-card">
+            <div class="metric-title">📐 Standardabweichung</div>
+            <div class="metric-value">± {STABW}</div>
+            <div class="metric-unit">Holz vom Durchschnitt</div>
+        </div>
+        """, unsafe_allow_html=True)
 
 
-    st.markdown("---")
+        st.markdown("---")
 
     #Diagramm
 
